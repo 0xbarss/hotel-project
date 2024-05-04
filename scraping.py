@@ -32,7 +32,7 @@ class Scraper:
                          RATING: rating,
                          PRICE: price,
                          })
-        return sortHotelData(pd.DataFrame(data)).head(HOTEL_DISPLAY_COUNT)
+        return sortHotelData(pd.DataFrame(data).head(HOTEL_SCRAPING_COUNT)).head(HOTEL_DISPLAY_COUNT)
         
     def run(city: str, checkIn: str, checkOut: str) -> pd.DataFrame:
         hotels = Scraper.getHotels(city, checkIn, checkOut)
