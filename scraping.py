@@ -1,7 +1,6 @@
 import requests
 import tkinter as tk
-from tkinter import Tk
-from tkinter import ttk
+from tkinter import Tk, ttk
 from bs4 import BeautifulSoup
 
 from utilities import *
@@ -9,7 +8,7 @@ from utilities import *
 
 class Scraper:
     def getHotels(city: str, checkIn: str, checkOut: str) -> BeautifulSoup:
-        resp = requests.get(URL.format(city, city, city, CITIES[city], checkIn, checkOut), headers=HEADERS)
+        resp = requests.get(URL.format(city, city, city, CITIES[city], checkIn, checkOut, GROUP_ADULTS, NO_ROOMS, GROUP_CHILDREN), headers=HEADERS)
         bs = BeautifulSoup(resp.text, 'html.parser')
         hotels = bs.findAll('div', {'data-testid': 'property-card'})
         return hotels
@@ -33,7 +32,7 @@ class Scraper:
                          RATING: rating,
                          PRICE: price,
                          })
-        return sortHotelData(pd.DataFrame(data).head(HOTEL_SCRAPING_COUNT)).head(HOTEL_VIEW_COUNT)
+        return sortHotelData(pd.DataFrame(data)).head(HOTEL_DISPLAY_COUNT)
         
     def run(city: str, checkIn: str, checkOut: str) -> pd.DataFrame:
         hotels = Scraper.getHotels(city, checkIn, checkOut)
@@ -48,20 +47,25 @@ class GUI:
         self.root.title("Hotel Program")
         self.root.geometry("1024x768")
 
-        style=ttk.Style()
-        style.theme_use('clam')
+        ttk.Style().theme_use('clam')
         
         self.cities = list(CITIES.keys())
     
     def search(self):
-        if not self.cityVar.get() or not self.checkInVar.get() or not self.checkOutVar.get():
-            self.warningVar.set(WARNING_MESSAGE)
+        city = self.cityVar.get()
+        checkIn = self.checkInVar.get()
+        checkOut = self.checkOutVar.get()
+        if not (city and checkIn and checkOut):
+            self.warningVar.set(WARNING_MESSAGE_1)
             return
-        if not isDate(self.checkInVar.get()) or not isDate(self.checkOutVar.get()):
-            self.warningVar.set(WARNING_MESSAGE)
+        if not (isDate(checkIn) and isDate(checkOut)):
+            self.warningVar.set(WARNING_MESSAGE_1)
+            return
+        df = Scraper.run(city, checkIn, checkOut)
+        if df.shape[0] == 0:
+            self.warningVar.set(WARNING_MESSAGE_2)
             return
         self.warningVar.set("")
-        df = Scraper.run(self.cityVar.get(), self.checkInVar.get(), self.checkOutVar.get())
         for row in self.results.get_children():
             self.results.delete(row)
         for index in range(df.shape[0]):
